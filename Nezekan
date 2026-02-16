@@ -1,6 +1,62 @@
-{
-  "nome_projeto": "Aion 2 Brasil - Daevanion System",
-  "classe": "Ranger",
+<div class="dae-master-container">
+  <style>
+    /* --- CSS ORIGINAL PRESERVADO --- */
+    .dae-master-container { width: 100%; max-width: 1000px; margin: 20px auto; background: #090c10; padding: 20px; border-radius: 12px; border: 1px solid #333; font-family: 'Segoe UI', sans-serif; color: #fff; box-sizing: border-box; position: relative; }
+    .dae-tabs-nav { display: flex; gap: 5px; border-bottom: 2px solid #333; margin-bottom: 20px; padding-bottom: 10px; overflow-x: auto; }
+    .tab-btn { background: #161b22; border: 1px solid #444; color: #888; padding: 10px 15px; cursor: pointer; border-radius: 6px 6px 0 0; font-weight: bold; transition: 0.3s; font-size: 13px; }
+    .tab-btn.active { background: #ffcc00; color: #000; border-color: #ffcc00; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .dae-header-info { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: #161b22; border-radius: 8px; margin-bottom: 15px; border: 1px solid #444; font-size: 14px; }
+    .daevanion-grid { display: grid; gap: 5px; padding: 10px; background: #0d1117; border-radius: 8px; border: 1px solid #21262d; margin: auto; }
+    .dae-slot { position: relative; aspect-ratio: 1/1; background: #161b22; border: 1px solid #30363d; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+    .dae-slot img { width: 80%; height: 80%; opacity: 0.2; filter: grayscale(1); pointer-events: none; }
+    .dae-slot.active img { opacity: 1 !important; filter: grayscale(0) !important; }
+    
+    /* Raridades e Bordas */
+    .dae-grey { border-color: #444; }
+    .dae-green { border-color: #4caf50; }
+    .dae-blue { border-color: #3366ff; }
+    .dae-orange { border-color: #ff6600; }
+    .dae-slot.active.dae-green { border-color: #4caf50; box-shadow: 0 0 10px rgba(76,175,80,0.6); }
+    .dae-slot.active.dae-blue { border-color: #3366ff; box-shadow: 0 0 10px rgba(51,102,255,0.6); }
+    .dae-slot.active.dae-orange { border-color: #ff6600; box-shadow: 0 0 10px rgba(255,102,0,0.6); }
+    .dae-slot.dae-nexus { border: 2px solid #fff; box-shadow: 0 0 15px #fff; cursor: default; }
+    .dae-slot.dae-nexus img { opacity: 1; filter: none; }
+    .dae-slot.dae-empty { visibility: hidden; pointer-events: none; }
+    .start-node:not(.active) { animation: daePulse 1.5s infinite; border-color: #fff; border-width: 2px; }
+    @keyframes daePulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+    /* Tooltip Global */
+    #dae-tooltip { position: absolute; display: none; z-index: 999; width: 180px; background: #1a1a1a; color: #fff; border-radius: 6px; border: 1px solid #444; padding: 10px; font-size: 12px; pointer-events: none; box-shadow: 0 5px 15px rgba(0,0,0,0.8); }
+    .dae-t-name { color: #ffcc00; font-weight: bold; }
+
+    /* Painel de Cálculo */
+    .dae-calc-panel { margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: #161b22; padding: 15px; border-radius: 8px; border: 1px solid #333; }
+    .calc-group h4 { margin: 0 0 10px 0; color: #ffcc00; font-size: 14px; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 5px; }
+    .calc-val { color: #ffcc00; font-weight: bold; }
+    .calc-item { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 13px; }
+  </style>
+
+  <div id="dae-tooltip"></div>
+  <div class="dae-tabs-nav" id="tab-navigation"></div>
+  <div id="tab-container"></div>
+  
+  <div class="dae-calc-panel">
+    <div class="calc-group">
+      <h4>Atributos Totais</h4>
+      <div id="statRes">Selecione pontos...</div>
+    </div>
+    <div class="calc-group">
+      <h4>Habilidades</h4>
+      <div id="skillRes">Nenhuma selecionada.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// --- O BANCO DE DADOS (JSON INTEGRADO) ---
+const daevanionData = {
   "tabuas": [
     {
       "id": "tab-nezekan",
@@ -8,124 +64,263 @@
       "limite": 134,
       "colunas": 11,
       "nodes": [
-        {"raridade": "orange", "custo": 4, "stat": "Velocidade Combate", "val": 2.5, "unit": "%", "img": "https://i.postimg.cc/PfwKHwsv/UT-FWindow-Daevanion-Node-Unique-Sprite.png"},
-        {"raridade": "grey", "custo": 1, "stat": "Ataque", "val": 5, "img": "https://i.postimg.cc/Ls1gPH84/UT_FWindow_Daevanion_Node_Common_Sprite.png"},
-        {"raridade": "grey", "custo": 1, "stat": "Resist. Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common_Sprite.png"},
+        {"rar": "orange", "cost": 4, "stat": "Vel. Combate", "val": 2.5, "unit": "%", "img": "https://i.postimg.cc/PfwKHwsv/UT-FWindow-Daevanion-Node-Unique-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "Ataque", "val": 5, "img": "https://i.postimg.cc/Ls1gPH84/UT_FWindow_Daevanion_Node_Common_Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "Res. Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common_Sprite.png"},
         {"tipo": "vazio"},
-        {"raridade": "green", "custo": 2, "skill": "Concentrated Fire", "img": "https://i.postimg.cc/J4z54cjS/pa_02.png"},
-        {"raridade": "grey", "custo": 1, "stat": "Resist. Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT_FWindow_Daevanion_Node_Common_Sprite.png"},
-        {"raridade": "blue", "custo": 3, "skill": "Suppresing Arrow", "img": "https://i.postimg.cc/ncfYqfbf/at_10.png"},
+        {"rar": "green", "cost": 2, "skill": "Concentrated Fire", "img": "https://i.postimg.cc/J4z54cjS/pa_02.png"},
+        {"rar": "grey", "cost": 1, "stat": "Res. Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT_FWindow_Daevanion_Node_Common_Sprite.png"},
+        {"rar": "blue", "cost": 3, "skill": "Suppresing Arrow", "img": "https://i.postimg.cc/ncfYqfbf/at_10.png"},
         {"tipo": "vazio"},
-        {"raridade": "green", "custo": 2, "skill": "Wind Vigor", "img": "https://i.postimg.cc/kXYFV6yp/pa_03.png"},
-        {"raridade": "grey", "custo": 1, "stat": "Hit Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT_FWindow_Daevanion_Node_Common_Sprite.png"},
-        {"raridade": "orange", "custo": 4, "stat": "Redução Cooldown", "val": 2.5, "unit": "%", "img": "https://i.postimg.cc/PfwKHwsv/UT_FWindow_Daevanion_Node_Unique_Sprite.png"},
-        {"raridade": "grey", "custo": 1, "stat": "Hit Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "green", "cost": 2, "skill": "Wind Vigor", "img": "https://i.postimg.cc/kXYFV6yp/pa_03.png"},
+        {"rar": "grey", "cost": 1, "stat": "Hit Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT_FWindow_Daevanion_Node_Common_Sprite.png"},
+        {"rar": "orange", "cost": 4, "stat": "Red. Cooldown", "val": 2.5, "unit": "%", "img": "https://i.postimg.cc/PfwKHwsv/UT_FWindow_Daevanion_Node_Unique_Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "Hit Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
         {"tipo": "vazio"},
-        {"raridade": "blue", "custo": 3, "skill": "Drill Dart", "img": "https://i.postimg.cc/J4CcjCwc/at_05.png"},
-        {"raridade": "grey", "custo": 1, "stat": "MP Máximo", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
-        {"raridade": "grey", "custo": 1, "stat": "Defesa", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "blue", "cost": 3, "skill": "Drill Dart", "img": "https://i.postimg.cc/J4CcjCwc/at_05.png"},
+        {"rar": "grey", "cost": 1, "stat": "MP Máximo", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "Defesa", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
         {"tipo": "vazio"},
-        {"raridade": "grey", "custo": 1, "stat": "MP Máximo", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
-        {"raridade": "grey", "custo": 1, "stat": "Defesa", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
-        {"raridade": "grey", "custo": 1, "stat": "Resist. Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "MP Máximo", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "Defesa", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "Res. Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
         {"tipo": "vazio"},
-        {"raridade": "grey", "custo": 1, "stat": "MP Máximo", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
-        {"raridade": "green", "custo": 2, "skill": "Vigilant Eye", "img": "https://i.postimg.cc/kXgvXFWZ/pa_01.png"},
-        {"raridade": "grey", "custo": 1, "stat": "Defesa", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
-        {"raridade": "grey", "custo": 1, "stat": "HP Máximo", "val": 100, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "MP Máximo", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "green", "cost": 2, "skill": "Vigilant Eye", "img": "https://i.postimg.cc/kXgvXFWZ/pa_01.png"},
+        {"rar": "grey", "cost": 1, "stat": "Defesa", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "HP Máximo", "val": 100, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
         {"tipo": "vazio"},
-        {"raridade": "grey", "custo": 1, "stat": "Hit Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
-        {"raridade": "blue", "custo": 3, "skill": "Snare Shot", "img": "https://i.postimg.cc/sfh4BDLm/at_03.png"},
-        {"raridade": "grey", "custo": 1, "stat": "HP Máximo", "val": 100, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "Hit Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "blue", "cost": 3, "skill": "Snare Shot", "img": "https://i.postimg.cc/sfh4BDLm/at_03.png"},
+        {"rar": "grey", "cost": 1, "stat": "HP Máximo", "val": 100, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
         {"tipo": "vazio"},
-        {"raridade": "blue", "custo": 3, "skill": "Explosion Trap", "img": "https://i.postimg.cc/dtcmGcMn/at_08.png"},
-        {"raridade": "grey", "custo": 1, "stat": "HP Máximo", "val": 100, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
-        {"raridade": "green", "custo": 2, "skill": "Focused Eye", "img": "https://i.postimg.cc/3NJmNY02/pa_04.png"},
+        {"rar": "blue", "cost": 3, "skill": "Explosion Trap", "img": "https://i.postimg.cc/dtcmGcMn/at_08.png"},
+        {"rar": "grey", "cost": 1, "stat": "HP Máximo", "val": 100, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "green", "cost": 2, "skill": "Focused Eye", "img": "https://i.postimg.cc/3NJmNY02/pa_04.png"},
         {"tipo": "vazio"},
-        {"raridade": "grey", "custo": 1, "stat": "HP Máximo", "val": 100, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "HP Máximo", "val": 100, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
         {"tipo": "vazio"}, {"tipo": "vazio"},
-        {"raridade": "grey", "custo": 1, "stat": "Resist. Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "Res. Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
         {"tipo": "vazio"},
-        {"raridade": "grey", "custo": 1, "stat": "Defesa", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "Defesa", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
         {"tipo": "vazio"},
-        {"raridade": "grey", "custo": 1, "stat": "Ataque", "val": 5, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "Ataque", "val": 5, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
         {"tipo": "vazio"},
-        {"raridade": "grey", "custo": 1, "stat": "Defesa", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
-        {"raridade": "grey", "custo": 1, "stat": "MP Máximo", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
-        {"raridade": "grey", "custo": 1, "stat": "Ataque", "val": 5, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
-        {"raridade": "blue", "custo": 3, "skill": "Tempest Shot", "img": "https://i.postimg.cc/c1nBK4z7/at_02.png"},
-        {"raridade": "grey", "custo": 1, "stat": "HP Máximo", "val": 100, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
-        {"raridade": "grey", "custo": 1, "stat": "MP Máximo", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
-        {"raridade": "grey", "custo": 1, "stat": "Ataque", "val": 5, "is_start": true, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
-        {"raridade": "grey", "custo": 1, "stat": "Resist. Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
-        {"raridade": "green", "custo": 2, "skill": "Hunter's Resolve", "img": "https://i.postimg.cc/Y0ngmZQg/pa_05.png"},
-        {"raridade": "grey", "custo": 1, "stat": "MP Máximo", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
-        {"raridade": "grey", "custo": 1, "stat": "Hit Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
-        {"raridade": "grey", "custo": 1, "stat": "Resist. Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
-        {"raridade": "blue", "custo": 3, "skill": "Defiance", "img": "https://i.postimg.cc/XvkKqSCt/ICON_CO_SKILL_002.png"},
+        {"rar": "grey", "cost": 1, "stat": "Defesa", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "MP Máximo", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "Ataque", "val": 5, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "blue", "cost": 3, "skill": "Tempest Shot", "img": "https://i.postimg.cc/c1nBK4z7/at_02.png"},
+        {"rar": "grey", "cost": 1, "stat": "HP Máximo", "val": 100, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "MP Máximo", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "Ataque", "val": 5, "start": true, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "Res. Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "green", "cost": 2, "skill": "Hunter's Resolve", "img": "https://i.postimg.cc/Y0ngmZQg/pa_05.png"},
+        {"rar": "grey", "cost": 1, "stat": "MP Máximo", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "Hit Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "Res. Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "blue", "cost": 3, "skill": "Defiance", "img": "https://i.postimg.cc/XvkKqSCt/ICON_CO_SKILL_002.png"},
         {"tipo": "vazio"}, {"tipo": "vazio"},
-        {"raridade": "grey", "custo": 1, "stat": "Defesa", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "Defesa", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
         {"tipo": "vazio"},
         {"tipo": "nexus", "img": "https://i.postimg.cc/fRGpDsnM/ut-class-ranger-large.webp"},
         {"tipo": "vazio"},
-        {"raridade": "grey", "custo": 1, "stat": "Ataque", "val": 5, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "Ataque", "val": 5, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
         {"tipo": "vazio"}, {"tipo": "vazio"},
-        {"raridade": "blue", "custo": 3, "skill": "Arrow Scattershot", "img": "https://i.postimg.cc/gkbq3b9D/at_06.png"},
-        {"raridade": "grey", "custo": 1, "stat": "Hit Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
-        {"raridade": "grey", "custo": 1, "stat": "Resist. Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
-        {"raridade": "grey", "custo": 1, "stat": "HP Máximo", "val": 100, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
-        {"raridade": "green", "custo": 2, "skill": "Focused Eye", "img": "https://i.postimg.cc/3NJmNY02/pa_04.png"},
-        {"raridade": "grey", "custo": 1, "stat": "Hit Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
-        {"raridade": "grey", "custo": 1, "stat": "Defesa", "val": 50, "is_start": true, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
-        {"raridade": "grey", "custo": 1, "stat": "HP Máximo", "val": 100, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
-        {"raridade": "grey", "custo": 1, "stat": "MP Máximo", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
-        {"raridade": "blue", "custo": 3, "skill": "Snipe", "img": "https://i.postimg.cc/c1nBK4zR/at_01.png"},
-        {"raridade": "grey", "custo": 1, "stat": "Defesa", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
-        {"raridade": "grey", "custo": 1, "stat": "HP Máximo", "val": 100, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
-        {"raridade": "grey", "custo": 1, "stat": "Ataque", "val": 5, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "blue", "cost": 3, "skill": "Arrow Scattershot", "img": "https://i.postimg.cc/gkbq3b9D/at_06.png"},
+        {"rar": "grey", "cost": 1, "stat": "Hit Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "Res. Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "HP Máximo", "val": 100, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "green", "cost": 2, "skill": "Focused Eye", "img": "https://i.postimg.cc/3NJmNY02/pa_04.png"},
+        {"rar": "grey", "cost": 1, "stat": "Hit Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "Defesa", "val": 50, "start": true, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "HP Máximo", "val": 100, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "MP Máximo", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "blue", "cost": 3, "skill": "Snipe", "img": "https://i.postimg.cc/c1nBK4zR/at_01.png"},
+        {"rar": "grey", "cost": 1, "stat": "Defesa", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "HP Máximo", "val": 100, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "Ataque", "val": 5, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
         {"tipo": "vazio"},
-        {"raridade": "grey", "custo": 1, "stat": "Defesa", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "Defesa", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
         {"tipo": "vazio"},
-        {"raridade": "grey", "custo": 1, "stat": "Ataque", "val": 5, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "Ataque", "val": 5, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
         {"tipo": "vazio"},
-        {"raridade": "grey", "custo": 1, "stat": "Hit Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "Hit Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
         {"tipo": "vazio"}, {"tipo": "vazio"},
-        {"raridade": "grey", "custo": 1, "stat": "MP Máximo", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "MP Máximo", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
         {"tipo": "vazio"},
-        {"raridade": "green", "custo": 2, "skill": "Hunter's Resolve", "img": "https://i.postimg.cc/Y0ngmZQg/pa_05.png"},
-        {"raridade": "grey", "custo": 1, "stat": "MP Máximo", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
-        {"raridade": "blue", "custo": 3, "skill": "Burst Arrow", "img": "https://i.postimg.cc/jdYQyYV9/at_09.png"},
+        {"rar": "green", "cost": 2, "skill": "Hunter's Resolve", "img": "https://i.postimg.cc/Y0ngmZQg/pa_05.png"},
+        {"rar": "grey", "cost": 1, "stat": "MP Máximo", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "blue", "cost": 3, "skill": "Burst Arrow", "img": "https://i.postimg.cc/jdYQyYV9/at_09.png"},
         {"tipo": "vazio"},
-        {"raridade": "grey", "custo": 1, "stat": "MP Máximo", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
-        {"raridade": "blue", "custo": 3, "skill": "Marking Shot", "img": "https://i.postimg.cc/QNTJBxzJ/at_04.png"},
-        {"raridade": "grey", "custo": 1, "stat": "Resist. Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "MP Máximo", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "blue", "cost": 3, "skill": "Marking Shot", "img": "https://i.postimg.cc/QNTJBxzJ/at_04.png"},
+        {"rar": "grey", "cost": 1, "stat": "Res. Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
         {"tipo": "vazio"},
-        {"raridade": "grey", "custo": 1, "stat": "MP Máximo", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
-        {"raridade": "grey", "custo": 1, "stat": "Ataque", "val": 5, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
-        {"raridade": "green", "custo": 2, "skill": "Concentrated Fire", "img": "https://i.postimg.cc/J4z54cjS/pa_02.png"},
-        {"raridade": "grey", "custo": 1, "stat": "HP Máximo", "val": 100, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "MP Máximo", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "Ataque", "val": 5, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "green", "cost": 2, "skill": "Concentrated Fire", "img": "https://i.postimg.cc/J4z54cjS/pa_02.png"},
+        {"rar": "grey", "cost": 1, "stat": "HP Máximo", "val": 100, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
         {"tipo": "vazio"},
-        {"raridade": "grey", "custo": 1, "stat": "Hit Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
-        {"raridade": "grey", "custo": 1, "stat": "Ataque", "val": 5, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
-        {"raridade": "grey", "custo": 1, "stat": "HP Máximo", "val": 100, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "Hit Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "Ataque", "val": 5, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "HP Máximo", "val": 100, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
         {"tipo": "vazio"},
-        {"raridade": "grey", "custo": 1, "stat": "Ataque", "val": 5, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
-        {"raridade": "grey", "custo": 1, "stat": "HP Máximo", "val": 100, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
-        {"raridade": "blue", "custo": 3, "skill": "Gale Arrow", "img": "https://i.postimg.cc/sDC95CFm/at_07.png"},
+        {"rar": "grey", "cost": 1, "stat": "Ataque", "val": 5, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "HP Máximo", "val": 100, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "blue", "cost": 3, "skill": "Gale Arrow", "img": "https://i.postimg.cc/sDC95CFm/at_07.png"},
         {"tipo": "vazio"},
-        {"raridade": "grey", "custo": 1, "stat": "Resist. Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
-        {"raridade": "orange", "custo": 4, "stat": "Redução Cooldown", "val": 2.5, "unit": "%", "img": "https://i.postimg.cc/PfwKHwsv/UT_FWindow_Daevanion_Node_Unique_Sprite.png"},
-        {"raridade": "grey", "custo": 1, "stat": "Resist. Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
-        {"raridade": "green", "custo": 2, "skill": "Wind Vigor", "img": "https://i.postimg.cc/kXYFV6yp/pa_03.png"},
+        {"rar": "grey", "cost": 1, "stat": "Res. Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "orange", "cost": 4, "stat": "Red. Cooldown", "val": 2.5, "unit": "%", "img": "https://i.postimg.cc/PfwKHwsv/UT_FWindow_Daevanion_Node_Unique_Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "Res. Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "green", "cost": 2, "skill": "Wind Vigor", "img": "https://i.postimg.cc/kXYFV6yp/pa_03.png"},
         {"tipo": "vazio"},
-        {"raridade": "blue", "custo": 3, "skill": "Deadshot", "img": "https://i.postimg.cc/tCGtFGQj/at_11.png"},
-        {"raridade": "grey", "custo": 1, "stat": "Hit Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
-        {"raridade": "green", "custo": 2, "skill": "Vigilant Eye", "img": "https://i.postimg.cc/kXgvXFWZ/pa_01.png"},
+        {"rar": "blue", "cost": 3, "skill": "Deadshot", "img": "https://i.postimg.cc/tCGtFGQj/at_11.png"},
+        {"rar": "grey", "cost": 1, "stat": "Hit Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "green", "cost": 2, "skill": "Vigilant Eye", "img": "https://i.postimg.cc/kXgvXFWZ/pa_01.png"},
         {"tipo": "vazio"},
-        {"raridade": "grey", "custo": 1, "stat": "Hit Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
-        {"raridade": "grey", "custo": 1, "stat": "Defesa", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
-        {"raridade": "orange", "custo": 4, "stat": "Velocidade Combate", "val": 2.5, "unit": "%", "img": "https://i.postimg.cc/PfwKHwsv/UT_FWindow_Daevanion_Node_Unique_Sprite.png"}
+        {"rar": "grey", "cost": 1, "stat": "Hit Crítico", "val": 10, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "grey", "cost": 1, "stat": "Defesa", "val": 50, "img": "https://i.postimg.cc/Ls1gPH84/UT-FWindow-Daevanion-Node-Common-Sprite.png"},
+        {"rar": "orange", "cost": 4, "stat": "Vel. Combate", "val": 2.5, "unit": "%", "img": "https://i.postimg.cc/PfwKHwsv/UT_FWindow_Daevanion_Node_Unique_Sprite.png"}
       ]
-    }
+    },
+    { "id": "tab-zikel", "nome": "II - Zikel", "limite": 134, "colunas": 11, "nodes": [] }
   ]
+};
+
+// --- MOTOR DE RENDERIZAÇÃO ---
+const tooltip = document.getElementById('dae-tooltip');
+
+function init() {
+  const nav = document.getElementById('tab-navigation');
+  const container = document.getElementById('tab-container');
+  
+  daevanionData.tabuas.forEach((tab, i) => {
+    // Criar Botão
+    const btn = document.createElement('button');
+    btn.className = `tab-btn ${i===0?'active':''}`;
+    btn.innerText = tab.nome;
+    btn.onclick = (e) => openTab(e, tab.id);
+    nav.appendChild(btn);
+
+    // Criar Grid
+    const content = document.createElement('div');
+    content.id = tab.id;
+    content.className = `tab-content ${i===0?'active':''}`;
+    content.dataset.limit = tab.limite;
+    content.dataset.cols = tab.colunas;
+    
+    content.innerHTML = `
+      <div class="dae-header-info">
+        <div><b>Tábua ${tab.nome}</b> | Custo: <b class="pontoCount">0</b> / ${tab.limite}</div>
+        <button class="dae-reset-btn" style="background:#30363d; border:1px solid #444; color:#fff; cursor:pointer; padding:3px 8px; border-radius:4px" onclick="resetTab()">Resetar</button>
+      </div>
+      <div class="daevanion-grid grid-${tab.colunas}" style="grid-template-columns: repeat(${tab.colunas}, 1fr)">
+        ${tab.nodes.map((n, idx) => renderSlot(n, idx)).join('')}
+      </div>
+    `;
+    container.appendChild(content);
+  });
+  bindEvents();
 }
+
+function renderSlot(n, idx) {
+  if (n.tipo === 'vazio') return `<div class="dae-slot dae-empty"></div>`;
+  if (n.tipo === 'nexus') return `<div class="dae-slot dae-nexus"><img src="${n.img}"></div>`;
+  
+  const rarityClass = `dae-${n.rar || 'grey'}`;
+  const startClass = n.start ? 'start-node' : '';
+  
+  return `
+    <div class="dae-slot ${rarityClass} ${startClass}" 
+         data-cost="${n.cost}" data-stat="${n.stat||''}" data-val="${n.val||''}" 
+         data-unit="${n.unit||''}" data-skill="${n.skill||''}">
+      <img src="${n.img}">
+    </div>`;
+}
+
+function openTab(evt, id) {
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  evt.currentTarget.classList.add('active');
+}
+
+function resetTab() {
+  document.querySelector('.tab-content.active').querySelectorAll('.dae-slot.active').forEach(s => s.classList.remove('active'));
+  updateCalc();
+}
+
+function bindEvents() {
+  document.querySelectorAll('.dae-slot').forEach(slot => {
+    if (slot.classList.contains('dae-nexus')) return;
+
+    // Tooltip
+    slot.onmouseenter = (e) => {
+      if (!slot.dataset.cost) return;
+      const d = slot.dataset;
+      tooltip.innerHTML = `
+        <span style="float:right; color:#ffcc00">${d.cost}</span>
+        <span class="dae-t-name">${d.stat || d.skill}</span><br>
+        <hr style="border:0; border-top:1px solid #333; margin:5px 0">
+        ${d.stat ? `+${d.val}${d.unit}` : 'Habilidade Lv +1'}
+      `;
+      tooltip.style.display = 'block';
+      const rect = slot.getBoundingClientRect();
+      const parentRect = document.querySelector('.dae-master-container').getBoundingClientRect();
+      tooltip.style.left = (rect.left - parentRect.left + (rect.width/2) - 90) + 'px';
+      tooltip.style.top = (rect.top - parentRect.top - 70) + 'px';
+    };
+    slot.onmouseleave = () => tooltip.style.display = 'none';
+
+    // Clique com Validação de Conexão Simples
+    slot.onclick = () => {
+      const activeTab = document.querySelector('.tab-content.active');
+      const slots = Array.from(activeTab.querySelectorAll('.dae-slot'));
+      const idx = slots.indexOf(slot);
+      const cols = parseInt(activeTab.dataset.cols);
+
+      if (!slot.classList.contains('active')) {
+        // Tenta Ativar: Precisa ser start ou ter vizinho ativo/nexus
+        const hasConn = [idx-1, idx+1, idx-cols, idx+cols].some(n => {
+          if (n < 0 || n >= slots.length) return false;
+          return slots[n].classList.contains('active') || slots[n].classList.contains('dae-nexus');
+        });
+
+        if (slot.classList.contains('start-node') || hasConn) {
+          slot.classList.add('active');
+        } else {
+          alert("Ponto sem conexão!");
+        }
+      } else {
+        slot.classList.remove('active'); // Simplificado para teste
+      }
+      updateCalc();
+    };
+  });
+}
+
+function updateCalc() {
+  const activeTab = document.querySelector('.tab-content.active');
+  let total = 0, stats = {}, skills = {};
+  
+  activeTab.querySelectorAll('.dae-slot.active').forEach(s => {
+    total += parseInt(s.dataset.cost);
+    if(s.dataset.stat) {
+      const k = s.dataset.stat;
+      if(!stats[k]) stats[k] = {v:0, u:s.dataset.unit};
+      stats[k].v += parseFloat(s.dataset.val);
+    }
+    if(s.dataset.skill) {
+      const sk = s.dataset.skill;
+      skills[sk] = (skills[sk] || 0) + 1;
+    }
+  });
+
+  activeTab.querySelector('.pontoCount').innerText = total;
+  document.getElementById('statRes').innerHTML = Object.keys(stats).map(k => `<div class="calc-item"><span>${k}</span><span class="calc-val">+${stats[k].v}${stats[k].u}</span></div>`).join('') || "Selecione pontos...";
+  document.getElementById('skillRes').innerHTML = Object.keys(skills).map(sk => `<div style="color:#4caf50; font-weight:bold">➔ ${sk} Lv+${skills[sk]}</div>`).join('') || "Nenhuma selecionada.";
+}
+
+// Inicializa o sistema
+init();
+</script>
